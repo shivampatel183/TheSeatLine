@@ -1,0 +1,214 @@
+{
+  "users": [
+    {
+      "name": "eventbooking",
+      "password_hash": "${RABBITMQ_PASSWORD_HASH}",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "administrator"
+    },
+    {
+      "name": "eventbooking_worker",
+      "password_hash": "${RABBITMQ_WORKER_PASSWORD_HASH}",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "management"
+    }
+  ],
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "permissions": [
+    {
+      "user": "eventbooking",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    },
+    {
+      "user": "eventbooking_worker",
+      "vhost": "/",
+      "configure": "",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "parameters": [],
+  "global_parameters": [
+    {
+      "name": "cluster_name",
+      "value": "eventbooking_cluster"
+    }
+  ],
+  "policies": [
+    {
+      "vhost": "/",
+      "name": "ha-all",
+      "pattern": ".*",
+      "apply-to": "all",
+      "definition": {
+        "ha-mode": "all",
+        "ha-sync-mode": "automatic"
+      },
+      "priority": 0
+    },
+    {
+      "vhost": "/",
+      "name": "dead-letter-policy",
+      "pattern": ".*",
+      "apply-to": "queues",
+      "definition": {
+        "dead-letter-exchange": "dead-letter-exchange",
+        "dead-letter-routing-key": "dead-letter"
+      },
+      "priority": 1
+    }
+  ],
+  "queues": [
+    {
+      "name": "booking.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 10000,
+        "x-message-ttl": 300000,
+        "x-dead-letter-exchange": "dead-letter-exchange",
+        "x-dead-letter-routing-key": "dead-letter.booking"
+      }
+    },
+    {
+      "name": "payment.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 10000,
+        "x-message-ttl": 300000,
+        "x-dead-letter-exchange": "dead-letter-exchange",
+        "x-dead-letter-routing-key": "dead-letter.payment"
+      }
+    },
+    {
+      "name": "notification.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 10000,
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "dead-letter-exchange",
+        "x-dead-letter-routing-key": "dead-letter.notification"
+      }
+    },
+    {
+      "name": "ticket.transfer.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-max-length": 5000,
+        "x-message-ttl": 86400000,
+        "x-dead-letter-exchange": "dead-letter-exchange",
+        "x-dead-letter-routing-key": "dead-letter.transfer"
+      }
+    },
+    {
+      "name": "dead-letter.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "booking.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "payment.exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "notification.exchange",
+      "vhost": "/",
+      "type": "fanout",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "ticket.transfer.exchange",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "dead-letter-exchange",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "booking.exchange",
+      "vhost": "/",
+      "destination": "booking.queue",
+      "destination_type": "queue",
+      "routing_key": "booking.create",
+      "arguments": {}
+    },
+    {
+      "source": "payment.exchange",
+      "vhost": "/",
+      "destination": "payment.queue",
+      "destination_type": "queue",
+      "routing_key": "payment.process",
+      "arguments": {}
+    },
+    {
+      "source": "notification.exchange",
+      "vhost": "/",
+      "destination": "notification.queue",
+      "destination_type": "queue",
+      "routing_key": "",
+      "arguments": {}
+    },
+    {
+      "source": "ticket.transfer.exchange",
+      "vhost": "/",
+      "destination": "ticket.transfer.queue",
+      "destination_type": "queue",
+      "routing_key": "transfer.*",
+      "arguments": {}
+    },
+    {
+      "source": "dead-letter-exchange",
+      "vhost": "/",
+      "destination": "dead-letter.queue",
+      "destination_type": "queue",
+      "routing_key": "dead-letter",
+      "arguments": {}
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+# docker/api/Dockerfile.dev
+# .NET API Development Dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS development
+
+# Install necessary tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Node.js for frontend dependencies
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
+    && apt-get install -y nodejs 
+
+# Install dotnet tools
+# Install dotnet tools
+RUN dotnet tool install --global dotnet-ef \
+    && dotnet tool install --global dotnet-reportgenerator-globaltool
+
+
+# Create app directory
+WORKDIR /app
+
+# Copy solution and project files
+COPY *.sln ./
+COPY src/Core/*/*.csproj ./src/Core/
+RUN for file in $(find ./src/Core -name "*.csproj"); do \
+        mkdir -p ${file%/*} && cp ${file} ${file%/*}/; \
+    done
+
+COPY src/Infrastructure/*/*.csproj ./src/Infrastructure/
+RUN for file in $(find ./src/Infrastructure -name "*.csproj"); do \
+        mkdir -p ${file%/*} && cp ${file} ${file%/*}/; \
+    done
+
+COPY src/Presentation/*/*.csproj ./src/Presentation/
+RUN for file in $(find ./src/Presentation -name "*.csproj"); do \
+        mkdir -p ${file%/*} && cp ${file} ${file%/*}/; \
+    done
+
+COPY tests/*/*.csproj ./tests/
+RUN for file in $(find ./tests -name "*.csproj"); do \
+        mkdir -p ${file%/*} && cp ${file} ${file%/*}/; \
+    done
+
+# Restore packages
+RUN dotnet restore
+
+# Copy everything else
+COPY . .
+
+# Create entrypoint script
+COPY docker/api/entrypoint.dev.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Expose ports
+EXPOSE 5000
+EXPOSE 5001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]
