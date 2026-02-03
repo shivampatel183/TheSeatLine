@@ -70,5 +70,35 @@ app.MapPost("/auth/login", async (LoginRequest request, IAuthService authService
 })
 .WithName("Login");
 
+app.MapPost("/auth/register", async (RegisterRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Email) ||
+        string.IsNullOrWhiteSpace(request.Password) ||
+        string.IsNullOrWhiteSpace(request.DisplayName))
+    {
+        return Results.BadRequest(new { message = "Email, display name, and password are required." });
+    }
+
+    var result = await authService.RegisterAsync(request, cancellationToken);
+    return result is null
+        ? Results.Conflict(new { message = "Email already registered." })
+        : Results.Ok(result);
+})
+.WithName("Register");
+
+app.MapPost("/auth/login", async (LoginRequest request, IAuthService authService, CancellationToken cancellationToken) =>
+{
+    if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+    {
+        return Results.BadRequest(new { message = "Email and password are required." });
+    }
+
+    var result = await authService.LoginAsync(request, cancellationToken);
+    return result is null
+        ? Results.Unauthorized()
+        : Results.Ok(result);
+})
+.WithName("Login");
+
 app.Run();
 

@@ -3,6 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Core\Application\TheSeatLine.Application\TheSeatLine.Application.csproj" />
     <ProjectReference Include="..\..\..\Core\Domain\TheSeatLine.Domain\TheSeatLine.Domain.csproj" />
+    <ProjectReference Include="..\..\..\Infrastructure\Persistence\TheSeatLine.Persistence\TheSeatLine.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>
