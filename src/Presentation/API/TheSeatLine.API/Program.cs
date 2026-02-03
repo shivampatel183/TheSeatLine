@@ -5,6 +5,7 @@ using TheSeatLine.Application.Auth.Models;
 using TheSeatLine.Application.Auth.Options;
 using TheSeatLine.Domain.Entities;
 using TheSeatLine.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
