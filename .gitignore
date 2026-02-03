@@ -1,5 +1,19 @@
-".vs/" 
-"bin/" 
-"obj/" 
-"node_modules/" 
-"dist/" 
+# Visual Studio
+.vs/
+bin/
+obj/
+
+# Docker volumes / data
+.docker/
+
+# Postgres / Redis runtime data
+postgres-data/
+redis-data/
+seq-data/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.*

@@ -1,0 +1,42 @@
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: theseatline-redis
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - theseatline-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: theseatline-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - theseatline-network
+
+  pgadmin:
+    image: dpage/pgadmin4:8
+    container_name: theseatline-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@theseatline.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - theseatline-network
+    depends_on:
+      - postgres
+
+volumes:
+  redis_data:
+  rabbitmq_data:
+  pgadmin_data:

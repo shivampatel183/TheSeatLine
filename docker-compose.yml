@@ -1,248 +1,64 @@
-# docker-compose.yml
-version: '1.1'
-
 services:
-  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: theseatline-postgres
     environment:
       POSTGRES_DB: TheSeatLineDb
       POSTGRES_USER: theseatline
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-StrongPassword123!}
-      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
-      TZ: "UTC"
+      POSTGRES_PASSWORD: StrongPassword123!
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./docker/postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ./docker/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf
-    networks:
-      - theseatline-network
-    command: >
-      postgres
-      -c config_file=/etc/postgresql/postgresql.conf
-      -c log_statement=all
-      -c log_destination=stderr
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U theseatline -d TheSeatLineDb"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    restart: unless-stopped
 
-  # Redis for Caching & Sessions
-  redis:
-    image: redis:7.2-alpine
-    container_name: theseatline-redis
-    command: >
-      redis-server
-      --requirepass ${REDIS_PASSWORD:-StrongRedisPassword123!}
-      --appendonly yes
-      --appendfsync everysec
-      --maxmemory 512mb
-      --maxmemory-policy allkeys-lru
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
-    volumes:
-      - redis_data:/data
-      - ./docker/redis/redis.conf:/usr/local/etc/redis/redis.conf
-      - ./docker/redis/init.sh:/usr/local/bin/init-redis.sh
-    networks:
-      - theseatline-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
-
-  # RabbitMQ for Message Queue
-  rabbitmq:
-    image: rabbitmq:3.12-management-alpine
-    container_name: theseatline-rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-theseatline}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-StrongRabbitMQPassword123!}
-      RABBITMQ_DEFAULT_VHOST: /
-      RABBITMQ_SSL_CACERTFILE: /etc/ssl/certs/ca-certificates.crt
-    ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-      - ./docker/rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
-      - ./docker/rabbitmq/definitions.json:/etc/rabbitmq/definitions.json
-      - ./docker/rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins
-    networks:
-      - theseatline-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-    restart: unless-stopped
-
-  # Seq for Structured Logging
-  seq:
-    image: datalust/seq:2023.4
-    container_name: theseatline-seq
-    environment:
-      ACCEPT_EULA: "Y"
-      SEQ_FIRSTRUN_ADMINUSERNAME: ${SEQ_USERNAME:-admin}
-      SEQ_FIRSTRUN_ADMINPASSWORDHASH: ${SEQ_PASSWORD_HASH}
-    ports:
-      - "${SEQ_PORT:-5341}:5341"
-      - "${SEQ_UI_PORT:-8081}:80"
-    volumes:
-      - seq_data:/data
-      - ./docker/seq/Seq.json:/usr/share/seq/Seq.json
-    networks:
-      - theseatline-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    restart: unless-stopped
-
-  # PostgreSQL Admin UI (Optional)
   pgadmin:
-    image: dpage/pgadmin4:8.0
+    image: dpage/pgadmin4
     container_name: theseatline-pgadmin
     environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@theseatline.com}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-AdminPassword123!}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+      PGADMIN_DEFAULT_EMAIL: admin@theseatline.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
-      - "${PGADMIN_PORT:-5050}:80"
+      - "5050:80"
     volumes:
       - pgadmin_data:/var/lib/pgadmin
-      - ./docker/postgres/servers.json:/pgadmin4/servers.json
-    networks:
-      - theseatline-network
     depends_on:
       - postgres
-    restart: unless-stopped
 
-  # Redis Commander for Redis UI
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    container_name: theseatline-redis-commander
-    environment:
-      REDIS_HOSTS: local:redis:6379
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-StrongRedisPassword123!}
-      HTTP_USER: ${REDIS_COMMANDER_USER:-admin}
-      HTTP_PASSWORD: ${REDIS_COMMANDER_PASSWORD:-RedisCommander123!}
-    ports:
-      - "${REDIS_COMMANDER_PORT:-8082}:8081"
-    networks:
-      - theseatline-network
-    depends_on:
-      - redis
-    restart: unless-stopped
+  # api-dev:
+  #   image: mcr.microsoft.com/dotnet/sdk:8.0
+  #   container_name: theseatline-api-dev
+  #   working_dir: /app
+  #   volumes:
+  #     - ./:/app
+  #   environment:
+  #     ASPNETCORE_ENVIRONMENT: Development
+  #     ASPNETCORE_URLS: http://+:5000
+  #     ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=TheSeatLineDb;Username=theseatline;Password=StrongPassword123!
+  #   ports:
+  #     - "5000:5000"
+  #   depends_on:
+  #     - postgres
+  #   command: >
+  #     bash -c "
+  #       dotnet restore &&
+  #       dotnet watch run --project src/Presentation/API/TheSeatLine.API/TheSeatLine.API.csproj --urls http://*:5000
+  #     "
 
-  # .NET API Development Container
-  api-dev:
-    build:
-      context: .
-      dockerfile: ./docker/api/Dockerfile.dev
-    container_name: theseatline-api-dev
-    environment:
-      ASPNETCORE_ENVIRONMENT: Development
-      ASPNETCORE_URLS: http://+:5000
-      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=TheSeatLineDb;Username=theseatline;Password=${POSTGRES_PASSWORD:-StrongPassword123!};Pooling=true;Minimum Pool Size=5;Maximum Pool Size=100;"
-      ConnectionStrings__Redis: "redis:6379,password=${REDIS_PASSWORD:-StrongRedisPassword123!},abortConnect=false"
-    ports:
-      - "${API_PORT:-5000}:5000"
-      - "${API_HTTPS_PORT:-5001}:5001"
-    volumes:
-      - ./src:/app/src:rw
-      - ./tests:/app/tests:rw
-      - ./TheSeatLine.sln:/app/TheSeatLine.sln:rw
-      - ~/.nuget/packages:/root/.nuget/packages:ro
-      - ./docker/api/nuget.config:/app/nuget.config:ro
-    networks:
-      - theseatline-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    command: >
-      bash -c "
-        dotnet restore &&
-        dotnet watch run --project src/Presentation/API/TheSeatLine.API.csproj
-      "
-    restart: unless-stopped
-
-  # Angular Development Container
-  angular-dev:
-    build:
-      context: .
-      dockerfile: ./docker/angular/Dockerfile.dev
-    container_name: theseatline-angular-dev
-    environment:
-      NODE_ENV: development
-      NG_CLI_ANALYTICS: "false"
-      CHOKIDAR_USEPOLLING: "true"
-    ports:
-      - "${ANGULAR_PORT:-4200}:4200"
-      - "${ANGULAR_HTTPS_PORT:-4201}:4201"
-    volumes:
-      - ./src/TheSeatLine.Web:/app:rw
-      - /app/node_modules
-    networks:
-      - theseatline-network
-    command: >
-      bash -c "
-        npm install &&
-        npm start -- --host 0.0.0.0 --port 4200 --disable-host-check
-      "
-    restart: unless-stopped
-
-networks:
-  theseatline-network:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-          gateway: 172.20.0.1
+  # angular-dev:
+  #   image: node:20-alpine
+  #   container_name: theseatline-angular-dev
+  #   working_dir: /app
+  #   volumes:
+  #     - ./src/TheSeatLine.Web:/app
+  #     - /app/node_modules
+  #   ports:
+  #     - "4200:4200"
+  #   command: >
+  #     sh -c "
+  #       npm install &&
+  #       npm start -- --host 0.0.0.0
+  #     "
 
 volumes:
   postgres_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/.docker/postgres-data
-      o: bind
-  redis_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/.docker/redis-data
-      o: bind
-  rabbitmq_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/.docker/rabbitmq-data
-      o: bind
-  seq_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/.docker/seq-data
-      o: bind
   pgadmin_data:
-    driver: local
-    driver_opts:
-      type: none
-      device: ${PWD}/.docker/pgadmin-data
-      o: bind
