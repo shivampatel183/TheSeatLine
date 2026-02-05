@@ -3,10 +3,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Core\Application\TheSeatLine.Application\TheSeatLine.Application.csproj" />
     <ProjectReference Include="..\..\..\Core\Domain\TheSeatLine.Domain\TheSeatLine.Domain.csproj" />
-    <ProjectReference Include="..\..\..\Infrastructure\Persistence\TheSeatLine.Persistence\TheSeatLine.Persistence.csproj" />
+    <ProjectReference Include="..\..\Persistence\TheSeatLine.Persistence\TheSeatLine.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.15" />
     <PackageReference Include="Microsoft.Extensions.Identity.Core" Version="10.0.2" />
     <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />

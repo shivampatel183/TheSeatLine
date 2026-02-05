@@ -10,4 +10,6 @@ public sealed class User
     public Organizer? OrganizerProfile { get; set; }
     public List<Order> Orders { get; set; } = new();
     public List<Ticket> OwnedTickets { get; set; } = new();
+    public string NormalizedEmail { get; set; }
+    public string PasswordHash { get; set; }
 }
